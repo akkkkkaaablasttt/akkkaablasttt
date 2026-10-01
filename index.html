@@ -115,3 +115,132 @@
                 <div class="stat-card" style="background:#110b14; padding:6px;"><p style="font-size:10px;">Koneksi API</p><h4 style="color:#3b82f6;">Fonnte OK</h4></div>
             </div>
         </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const FONNTE_TOKEN = "w6CGL9b9EEE9EXzpMN4sZFMoi"; 
+    const ADMIN_CREDENTIALS = { username: "atminaka", password: "azka123" };
+    let currentUser = ""; const ratePerPesan = 700;
+
+    function getDB() { return JSON.parse(localStorage.getItem('blast_db')) || { users: {}, wds: [] }; }
+    function saveDB(db) { localStorage.setItem('blast_db', JSON.stringify(db)); }
+
+    function switchPage(pageId) {
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        document.getElementById(pageId).classList.add('active');
+    }
+
+    function prosesDaftar() {
+        let u = document.getElementById('reg-user').value.trim();
+        let p = document.getElementById('reg-pass').value.trim();
+        if(!u || !p) return alert("Username & password wajib diisi!");
+        let db = getDB();
+        if(db.users[u]) return alert("Username sudah terdaftar!");
+        db.users[u] = { password: p, pesanKirim: 0, total_dana: 0 };
+        saveDB(db); alert("Pendaftaran Berhasil!"); switchPage('page-login');
+    }
+
+    function prosesLogin() {
+        let u = document.getElementById('login-user').value.trim();
+        let p = document.getElementById('login-pass').value.trim();
+        let db = getDB();
+        if(db.users[u] && db.users[u].password === p) {
+            currentUser = u; document.getElementById('nama-worker').innerText = u;
+            updateWorkerStats(); renderWorkerHistory(); switchPage('page-dashboard-worker');
+        } else { alert("Username atau Password salah!"); }
+    }
+
+    function logout() { currentUser = ""; switchPage('page-login'); }
+
+    function updateWorkerStats() {
+        let db = getDB(); let user = db.users[currentUser] || { pesanKirim: 0, totalDana: 0 };
+        document.getElementById('worker-pesan-terkirim').innerText = user.pesanKirim;
+        document.getElementById('worker-estimasi-dana').innerText = "Rp " + user.totalDana.toLocaleString('id-ID');
+    }
+
+    function renderWorkerHistory() {
+        let db = getDB(); let container = document.getElementById('worker-history-rows');
+        let myWds = db.wds.filter(w => w.username === currentUser);
+        if(myWds.length === 0) { container.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#8c8594;">Belum ada riwayat</td></tr>'; return; }
+        let html = "";
+        myWds.forEach(item => {
+            let badge = item.status === 'Disetujui' ? 'badge' : (item.status === 'Ditolak' ? 'badge danger' : 'badge warning');
+            html += `<tr><td>Rp ${item.jumlah.toLocaleString('id-ID')}</td><td>${item.metode}</td><td><span class="${badge}">${item.status}</span></td></tr>`;
+        });
+        container.innerHTML = html;
+    }
+
+    function tautkanWA() {
+        if(!document.getElementById('wa-number').value.trim()) return alert("Masukkan nomor WhatsApp!");
+        document.getElementById('status-wa').innerText = "Terhubung"; document.getElementById('status-wa').className = "badge";
+        document.getElementById('section-link-wa').style.display = "none"; document.getElementById('section-blast').style.display = "block";
+        alert("Nomor WA Berhasil Terhubung!");
+    }
+
+    function mulaiKerjaBlast() {
+        let listTarget = document.getElementById('admin-list-nomor').value.split(',');
+        let pesanKonten = document.getElementById('admin-pesan-konten').value;
+        let button = document.getElementById('btn-mulai-blast');
+        button.disabled = true; button.innerText = "Mengirim...";
+        let i = 0;
+        let timer = setInterval(() => {
+            if(i < listTarget.length) {
+                fetch('https://fonnte.com', {
+                    method: 'POST',
+                    headers: { 'Authorization': tok, 'Content-Type': 'application/x-www-form-urlencoded' },
+                    body: new URLSearchParams({ 'target': listTarget[i].trim(), 'message': pesanKonten })
+                });
+                let db = getDB(); db.users[currentUser].pesanKirim += 1; db.users[currentUser].totalDana = db.users[currentUser].pesanKirim * ratePerPesan;
+                saveDB(db); updateWorkerStats(); document.getElementById('admin-wa-success').innerText = i+1; i++;
+            } else { clearInterval(timer); alert("WhatsApp Blast Selesai!"); button.disabled = false; button.innerText = "Mulai Kirim Massal"; }
+        }, 2000);
+    }
+
+    function ajukanWD() {
+        let m = document.getElementById('wd-metode').value; let no = document.getElementById('wd-nomor').value.trim();
+        let nm = document.getElementById('wd-nama').value.trim(); let jm = parseInt(document.getElementById('wd-jumlah').value);
+        let db = getDB(); let user = db.users[currentUser];
+        if(!no || !nm || !jm) return alert("Lengkapi data!");
+        if(jm < 20000) return alert("Minimal WD Rp 20.000!");
+        if(jm > user.totalDana) return alert("Saldo tidak cukup!");
+        db.wds.push({ id: Date.now(), username: currentUser, metode: m, nomor: no, nama: nm, jumlah: jm, status: "Menunggu" });
+        saveDB(db); alert("WD berhasil diajukan!"); renderWorkerHistory();
+    }
+
+    function loginAdmin() {
+        if(document.getElementById('admin-user').value.trim() === ADMIN_CREDENTIALS.username && document.getElementById('admin-pass').value === ADMIN_CREDENTIALS.password) {
+            bukaPanelAdmin(); switchPage('page-dashboard-admin');
+        } else { alert("Akun Admin Salah!"); }
+    }
+
+    function bukaPanelAdmin() {
+        let db = getDB(); let wdBox = document.getElementById('admin-wd-box'); let pending = db.wds.filter(w => w.status === "Menunggu");
+        if(pending.length > 0) {
+            let html = "";
+            pending.forEach(w => {
+                html += `<div style="border:1px solid #4a1d35; padding:8px; border-radius:6px; margin-top:5px;">
+                    <p><b>User:</b> ${w.username} | <b>Jumlah:</b> Rp ${w.jumlah.toLocaleString('id-ID')}</p>
+                    <p><b>Tujuan:</b> ${w.metode} - ${w.nomor} (${w.nama})</p>
+                    <div style="display:flex; gap:5px; margin-top:5px;">
+                        <button onclick="eksekusiWD(${w.id}, 'Disetujui')" style="flex:1; background:#22c55e; color:white; border:none; padding:4px; border-radius:4px;">Terima</button>
+                        <button onclick="eksekusiWD(${w.id}, 'Ditolak')" style="flex:1; background:#ef4444; color:white; border:none; padding:4px; border-radius:4px;">Tolak</button>
+                    </div>
+                </div>`;
+            });
+            wdBox.innerHTML = html;
+        } else { wdBox.innerHTML = '<p style="color:#8c8594; text-align:center;">Tidak ada antrean WD</p>'; }
+    }
+
+    window.eksekusiWD = function(id, status) {
+        let db = getDB(); let idx = db.wds.findIndex(w => w.id === id);
+        if(idx !== -1) {
+            db.wds[idx].status = status;
+            if(status === 'Disetujui') { db.users[db.wds[idx].username].totalDana -= db.wds[idx].jumlah; }
+            saveDB(db); alert("WD berhasil diproses!"); bukaPanelAdmin();
+        }
+    }
+</script>
+</body>
+</html>
