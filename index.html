@@ -1,0 +1,189 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>akkaaaz1 blastt - Portal</title>
+    <link rel="stylesheet" href="https://cloudflare.com">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: #0f0a14; color: #f3f4f6; padding: 16px; display: flex; justify-content: center; min-height: 100vh; align-items: center; }
+        .container { background: #150f1d; padding: 24px 20px; border-radius: 16px; width: 100%; max-width: 460px; border: 1px solid #281930; box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5); }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h2 { color: #d61c6f; font-size: 26px; font-weight: 700; margin-bottom: 4px; }
+        .header p { color: #8c8594; font-size: 12px; }
+        
+        .tab-menu { display: flex; gap: 10px; margin-bottom: 15px; }
+        .tab-btn { flex: 1; padding: 12px; border-radius: 8px; border: 1px solid #2a1f35; background: #0f0a14; color: #a49eb0; font-size: 14px; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .tab-btn.active { background: #d61c6f; color: white; border: none; }
+
+        .info-box { background: #251021; border: 1px solid #4a1534; color: #e599c5; padding: 12px; border-radius: 8px; font-size: 12.5px; margin-bottom: 20px; display: flex; align-items: center; gap: 8px; }
+        .form-group { margin-bottom: 14px; }
+        .form-group label { display: block; font-size: 13px; color: #a49eb0; margin-bottom: 6px; }
+        .form-group input, .form-group select, .form-group textarea { width: 100%; padding: 12px; border-radius: 8px; border: 1px solid #201828; background: #08050c; color: white; font-size: 14px; }
+        .form-group input::placeholder { color: #4a4254; }
+        
+        .btn-submit { width: 100%; padding: 14px; background: #d61c6f; color: white; font-weight: bold; font-size: 14px; border: none; border-radius: 8px; cursor: pointer; margin-top: 5px; margin-bottom: 15px; display: flex; justify-content: center; align-items: center; gap: 8px; }
+        .btn-secondary { width: 100%; padding: 12px; background: #2d3446; color: #abc1de; border: none; border-radius: 8px; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        
+        .center-link { display: block; text-align: center; color: #a49eb0; text-decoration: none; font-size: 13px; margin-bottom: 20px; cursor: pointer; }
+        .center-link span { color: #d61c6f; font-weight: bold; }
+        
+        .page { display: none; }
+        .page.active { display: block; }
+        .badge { background: #22c55e; color: white; padding: 2px 8px; border-radius: 12px; font-size: 11px; }
+        .badge.danger { background: #ef4444; }
+        .badge.warning { background: #eab308; }
+        
+        .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+        .stat-card { background: #08050c; padding: 12px; border-radius: 8px; border: 1px solid #201828; text-align: center; }
+        .stat-card p { font-size: 12px; color: #8c8594; }
+        .stat-card h3 { color: #f472b6; margin-top: 4px; }
+
+        .history-section { border-top: 1px dashed #4a1d35; padding-top: 15px; margin-top: 15px; }
+        .history-table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 12px; }
+        .history-table th, .history-table td { padding: 8px; text-align: left; border-bottom: 1px solid #201828; }
+        .history-table th { color: #a49eb0; background: #08050c; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- HEADER UTAMA -->
+    <div class="header">
+        <h2>akkaaaz1 blastt</h2>
+        <p>Reward & Worker Portal (Rate: Rp 700/Pesan)</p>
+    </div>
+
+    <!-- 1. HALAMAN LOGIN WORKER -->
+    <div id="page-login" class="page active">
+        <div class="tab-menu">
+            <button class="tab-btn active" type="button" onclick="switchPage('page-login')"><i class="fa-solid fa-user-gear"></i> Menu Worker</button>
+            <button class="tab-btn" type="button" onclick="switchPage('page-admin-login')"><i class="fa-solid fa-shield-halved"></i> Admin Panel</button>
+        </div>
+        <div class="info-box">
+            <i class="fa-solid fa-lock"></i>
+            <span>Masukkan Username & Password akun worker kamu.</span>
+        </div>
+        <div class="form-group">
+            <label>Username:</label>
+            <input type="text" id="login-user" placeholder="Masukkan username">
+        </div>
+        <div class="form-group">
+            <label>Password:</label>
+            <input type="password" id="login-pass" placeholder="Masukkan password">
+        </div>
+        <button class="btn-submit" onclick="prosesLogin()">Masuk Portal Worker</button>
+        <a class="center-link" onclick="switchPage('page-daftar')">bubub belum punya akun? <span>daftar klik disini</span></a>
+    </div>
+
+    <!-- 2. HALAMAN DAFTAR WORKER -->
+    <div id="page-daftar" class="page">
+        <div class="info-box">
+            <i class="fa-solid fa-user-plus"></i>
+            <span>Pendaftaran Akun Baru Worker</span>
+        </div>
+        <div class="form-group">
+            <label>Buat Username Baru:</label>
+            <input type="text" id="reg-user" placeholder="Masukkan username baru">
+        </div>
+        <div class="form-group">
+            <label>Buat Password Baru:</label>
+            <input type="password" id="reg-pass" placeholder="Masukkan password baru">
+        </div>
+        <button class="btn-submit" onclick="prosesDaftar()">Daftar Akun Sekarang</button>
+        <a class="center-link" onclick="switchPage('page-login')">Sudah punya akun? <span>Login disini</span></a>
+    </div>
+
+    <!-- 3. HALAMAN DASHBOARD WORKER -->
+    <div id="page-dashboard-worker" class="page">
+        <div class="info-box" style="background: #112518; border-color: #154a27; color: #99e5b5;">
+            <i class="fa-solid fa-circle-user"></i>
+            <span>Halo, <b id="nama-worker">Worker</b>! Status WA: <span id="status-wa" class="badge danger">Terputus</span></span>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card">
+                <p>Total Pesan Kirim</p>
+                <h3 id="worker-pesan-terkirim">0</h3>
+            </div>
+            <div class="stat-card">
+                <p>Estimasi Pendapatan</p>
+                <h3 id="worker-estimasi-dana">Rp 0</h3>
+            </div>
+        </div>
+
+        <!-- Fitur Tautkan WhatsApp -->
+        <div id="section-link-wa">
+            <div class="form-group">
+                <label>Nomor WhatsApp Anda (Gunakan kode negara, misal: 628xxx):</label>
+                <input type="number" id="wa-number" placeholder="628xxxxxxxx">
+            </div>
+            <button class="btn-submit" style="background:#22c55e;" onclick="tautkanWA()">
+                <i class="fa-brands fa-whatsapp"></i> Minta Kode Tautan WA
+            </button>
+        </div>
+
+        <!-- Fitur Kerja Blast -->
+        <div id="section-blast" style="display:none; border-top: 1px dashed #4a1d35; padding-top: 15px;">
+            <div class="form-group">
+                <label>Jeda Waktu Pengiriman (Interval):</label>
+                <select id="blast-interval">
+                    <option value="2">2 Detik</option>
+                    <option value="5">5 Detik</option>
+                    <option value="30">30 Detik</option>
+                </select>
+            </div>
+            <button class="btn-submit" id="btn-mulai-blast" onclick="mulaiKerjaBlast()">Mulai Ambil Tugas & Kirim Massal</button>
+        </div>
+
+        <!-- Fitur Tarik Dana (WD) -->
+        <div style="border-top: 1px dashed #4a1d35; padding-top: 15px; margin-top: 15px;">
+            <h4 style="margin-bottom:10px; color:#f472b6;">Menu Penarikan Saldo (WD)</h4>
+            <div class="form-group">
+                <label>Pilih Metode Bank/E-Wallet:</label>
+                <select id="wd-metode">
+                    <option value="DANA">DANA</option>
+                    <option value="GOPAY">GOPAY</option>
+                    <option value="SEABANK">SEABANK</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Nomor Rekening / E-Wallet:</label>
+                <input type="text" id="wd-nomor" placeholder="Masukkan nomor akun">
+            </div>
+            <div class="form-group">
+                <label>Nama Pemilik Rekening:</label>
+                <input type="text" id="wd-nama" placeholder="Masukkan nama pemilik">
+            </div>
+            <div class="form-group">
+                <label>Jumlah WD (Min. Rp 20.000):</label>
+                <input type="number" id="wd-jumlah" placeholder="Contoh: 20000">
+            </div>
+            <button class="btn-submit" style="background:#a855f7;" onclick="ajukanWD()">Ajukan Permintaan WD</button>
+        </div>
+
+        <!-- Riwayat Transaksi -->
+        <div class="history-section">
+            <h4 style="color:#f472b6;"><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Transaksi WD</h4>
+            <table class="history-table">
+                <thead>
+                    <tr>
+                        <th>Jumlah</th>
+                        <th>Metode</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="worker-history-rows">
+                    <tr>
+                        <td colspan="3" style="text-align:center; color:#8c8594;">Belum ada riwayat transaksi</td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+
+        <button class="btn-secondary" style="margin-top:15px;" onclick="logout()">Keluar Akun</button>
+    </div>
+
+    <!-- 4. HALAMAN LOGIN ADMIN -->
+          
