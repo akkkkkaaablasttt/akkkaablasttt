@@ -2,7 +2,7 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>akkaaaz1 blastt - Portal</title>
+    <title>akkaaaz1 blastt - Portal Resmi</title>
     <link rel="stylesheet" href="https://cloudflare.com">
     <script src="https://jsdelivr.net"></script>
     <style>
@@ -44,7 +44,7 @@
     </div>
 
     <div id="page-dashboard-worker" class="page">
-        <div class="info-box" style="background:#112518; color:#99e5b5;">Halo, <b id="nama-worker">Worker</b>! Status WA: <span class="badge danger">Terputus</span></div>
+        <div class="info-box" style="background:#112518; color:#99e5b5;">Halo, <b id="nama-worker">Worker</b>! Status WA: <span id="status-wa" class="badge danger">Terputus</span></div>
         <div class="stats-grid">
             <div class="stat-card"><p style="font-size:11px; color:#8c8594;">Total Kirim</p><h3>140</h3></div>
             <div class="stat-card"><p style="font-size:11px; color:#8c8594;">Pendapatan</p><h3 style="color:#f472b6;">Rp 98.000</h3></div>
@@ -82,7 +82,7 @@
 </div>
 
 <script>
-    const url = "https://supabase.co
+    const url = "https://supabase.co";
     const key = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNwamFrcHdneXR1d2puaGNnYmNtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDMxMzI4OTgsImV4cCI6MjA1ODcxMjg5OH0.eD9F-7tq4X83Fp9uG8_cGFN6bE"; 
     const tok = "w6CGL9b9EEE9EXzpMN4sZFMoi";
     const supabaseClient = supabase.createClient(url, key);
