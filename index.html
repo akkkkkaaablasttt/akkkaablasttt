@@ -120,12 +120,33 @@
 </div>
 
 <script>
-    const FONNTE_TOKEN = "w6CGL9b9EEE9EXzpMN4sZFMoi"; 
+    const tok = "w6CGL9b9EEE9EXzpMN4sZFMoi"; 
     const ADMIN_CREDENTIALS = { username: "atminaka", password: "azka123" };
     let currentUser = ""; const ratePerPesan = 700;
+    let localMemory = { users: {}, wds: [] };
 
-    function getDB() { return JSON.parse(localStorage.getItem('blast_db')) || { users: {}, wds: [] }; }
-    function saveDB(db) { localStorage.setItem('blast_db', JSON.stringify(db)); }
+    const dbRequest = indexedDB.open("BlastPortalDB", 1);
+    dbRequest.onupgradeneeded = function(e) {
+        let database = e.target.result;
+        if (!database.objectStoreNames.contains("store_data")) { database.createObjectStore("store_data", { keyPath: "id" }); }
+    };
+    dbRequest.onsuccess = function(e) {
+        let database = e.target.result;
+        let transaction = database.transaction("store_data", "readonly");
+        let store = transaction.objectStore("store_data");
+        let getReq = store.get("main_data");
+        getReq.onsuccess = function() { if (getReq.result) { localMemory = getReq.result.value; } };
+    };
+
+    function syncDB() {
+        const dbReq = indexedDB.open("BlastPortalDB", 1);
+        dbReq.onsuccess = function(e) {
+            let database = e.target.result;
+            let transaction = database.transaction("store_data", "readwrite");
+            let store = transaction.objectStore("store_data");
+            store.put({ id: "main_data", value: localMemory });
+        };
+    }
 
     function switchPage(pageId) {
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -136,33 +157,30 @@
         let u = document.getElementById('reg-user').value.trim();
         let p = document.getElementById('reg-pass').value.trim();
         if(!u || !p) return alert("Username & password wajib diisi!");
-        let db = getDB();
-        if(db.users[u]) return alert("Username sudah terdaftar!");
-        db.users[u] = { password: p, pesanKirim: 0, total_dana: 0 };
-        saveDB(db); alert("Pendaftaran Berhasil!"); switchPage('page-login');
+        if(localMemory.users[u]) return alert("Username sudah terdaftar!");
+        localMemory.users[u] = { password: p, pesanKirim: 0, totalDana: 0 };
+        syncDB(); alert("Pendaftaran Berhasil!"); switchPage('page-login');
     }
 
     function prosesLogin() {
         let u = document.getElementById('login-user').value.trim();
         let p = document.getElementById('login-pass').value.trim();
-        let db = getDB();
-        if(db.users[u] && db.users[u].password === p) {
+        if(localMemory.users[u] && localMemory.users[u].password === p) {
             currentUser = u; document.getElementById('nama-worker').innerText = u;
             updateWorkerStats(); renderWorkerHistory(); switchPage('page-dashboard-worker');
         } else { alert("Username atau Password salah!"); }
     }
 
     function logout() { currentUser = ""; switchPage('page-login'); }
-
     function updateWorkerStats() {
-        let db = getDB(); let user = db.users[currentUser] || { pesanKirim: 0, totalDana: 0 };
+        let user = localMemory.users[currentUser] || { pesanKirim: 0, totalDana: 0 };
         document.getElementById('worker-pesan-terkirim').innerText = user.pesanKirim;
         document.getElementById('worker-estimasi-dana').innerText = "Rp " + user.totalDana.toLocaleString('id-ID');
     }
 
     function renderWorkerHistory() {
-        let db = getDB(); let container = document.getElementById('worker-history-rows');
-        let myWds = db.wds.filter(w => w.username === currentUser);
+        let container = document.getElementById('worker-history-rows');
+        let myWds = localMemory.wds.filter(w => w.username === currentUser);
         if(myWds.length === 0) { container.innerHTML = '<tr><td colspan="3" style="text-align:center; color:#8c8594;">Belum ada riwayat</td></tr>'; return; }
         let html = "";
         myWds.forEach(item => {
@@ -192,8 +210,8 @@
                     headers: { 'Authorization': tok, 'Content-Type': 'application/x-www-form-urlencoded' },
                     body: new URLSearchParams({ 'target': listTarget[i].trim(), 'message': pesanKonten })
                 });
-                let db = getDB(); db.users[currentUser].pesanKirim += 1; db.users[currentUser].totalDana = db.users[currentUser].pesanKirim * ratePerPesan;
-                saveDB(db); updateWorkerStats(); document.getElementById('admin-wa-success').innerText = i+1; i++;
+                localMemory.users[currentUser].pesanKirim += 1; localMemory.users[currentUser].totalDana = localMemory.users[currentUser].pesanKirim * ratePerPesan;
+                syncDB(); updateWorkerStats(); document.getElementById('admin-wa-success').innerText = i+1; i++;
             } else { clearInterval(timer); alert("WhatsApp Blast Selesai!"); button.disabled = false; button.innerText = "Mulai Kirim Massal"; }
         }, 2000);
     }
@@ -201,12 +219,12 @@
     function ajukanWD() {
         let m = document.getElementById('wd-metode').value; let no = document.getElementById('wd-nomor').value.trim();
         let nm = document.getElementById('wd-nama').value.trim(); let jm = parseInt(document.getElementById('wd-jumlah').value);
-        let db = getDB(); let user = db.users[currentUser];
+        let user = localMemory.users[currentUser];
         if(!no || !nm || !jm) return alert("Lengkapi data!");
         if(jm < 20000) return alert("Minimal WD Rp 20.000!");
         if(jm > user.totalDana) return alert("Saldo tidak cukup!");
-        db.wds.push({ id: Date.now(), username: currentUser, metode: m, nomor: no, nama: nm, jumlah: jm, status: "Menunggu" });
-        saveDB(db); alert("WD berhasil diajukan!"); renderWorkerHistory();
+        localMemory.wds.push({ id: Date.now(), username: currentUser, metode: m, nomor: no, nama: nm, jumlah: jm, status: "Menunggu" });
+        syncDB(); alert("WD berhasil diajukan!"); renderWorkerHistory();
     }
 
     function loginAdmin() {
@@ -216,7 +234,7 @@
     }
 
     function bukaPanelAdmin() {
-        let db = getDB(); let wdBox = document.getElementById('admin-wd-box'); let pending = db.wds.filter(w => w.status === "Menunggu");
+        let wdBox = document.getElementById('admin-wd-box'); let pending = localMemory.wds.filter(w => w.status === "Menunggu");
         if(pending.length > 0) {
             let html = "";
             pending.forEach(w => {
@@ -234,11 +252,11 @@
     }
 
     window.eksekusiWD = function(id, status) {
-        let db = getDB(); let idx = db.wds.findIndex(w => w.id === id);
+        let idx = localMemory.wds.findIndex(w => w.id === id);
         if(idx !== -1) {
-            db.wds[idx].status = status;
-            if(status === 'Disetujui') { db.users[db.wds[idx].username].totalDana -= db.wds[idx].jumlah; }
-            saveDB(db); alert("WD berhasil diproses!"); bukaPanelAdmin();
+            localMemory.wds[idx].status = status;
+            if(status === 'Disetujui') { localMemory.users[localMemory.wds[idx].username].totalDana -= localMemory.wds[idx].jumlah; }
+            syncDB(); alert("WD berhasil diproses!"); bukaPanelAdmin();
         }
     }
 </script>
